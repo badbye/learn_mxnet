@@ -1,0 +1,53 @@
+---
+title       : Introduction to MXNet
+subtitle    : A efficiency and flexibility deep learning framework
+author      : yalei
+job         : 
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## DMLC
+
+<a href='https://github.com/dmlc'><img src='pic/dmlc.png' height=500></a>
+
+
+---
+## MXNet
+
+- **M** : `mix`, 混合符号编程(symbolic programming)和命令式编程(imperative programming)
+
+- **X**: `maximize`, 特制效率的提升
+
+---
+## MXNet
+
+- 高效，支持多核并行
+
+- 可移植，目前有R,Python,Julia,Matlab和Scala等接口。可在单机，集群甚至手机端运行
+
+- 可扩展，支持单机多卡和多机并行
+
+
+--- 
+## 数据结构: NDArray
+
+MXNet的基础数据结构，类似于numpy的array结构。**支持CPU和GPU**，并有**自动求导**的功能。
+
+
+
+
+
+
+
+--- .class #id 
+
+## Slide 2
+
+
+
+
