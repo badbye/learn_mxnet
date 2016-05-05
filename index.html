@@ -73,9 +73,99 @@
   <article data-timings="">
     <ul>
 <li><p>高效，支持多核并行</p></li>
-<li><p>可移植，目前有R,Python,Julia,Matlab和Scala等接口</p></li>
+<li><p>可移植，目前有R,Python,Julia,Matlab和Scala等接口。可在单机，集群甚至手机端运行</p></li>
 <li><p>可扩展，支持单机多卡和多机并行</p></li>
 </ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>MXNet系统组成</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><p>数据结构: <code>mxnet.NDArray</code></p></li>
+<li><p>网络定义: <code>mxnet.symbol</code> <strong>核心接口</strong></p></li>
+<li><p>优化器: <code>mxnet.optimize</code></p></li>
+<li><p>数据传输: <code>mxnet.io</code></p></li>
+<li><p>其他:</p>
+
+<ul>
+<li>模型接口: 模型的载入，存贮以及fine-tune等</li>
+<li>kvstore: 设备间的数据交互</li>
+</ul></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h2>mxnet.NDArray</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>MXNet的基础数据结构，类似于numpy的array结构。<strong>支持CPU和GPU</strong>，并有<strong>自动求导</strong>的功能。</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-6" style="background:;">
+  <hgroup>
+    <h2>mxnet.io</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>常用IO接口:</p>
+
+<ul>
+<li><p>NDArrayIter: 用于常规的array数据</p></li>
+<li><p>CSVIter: 用于csv文件</p></li>
+<li><p>ImageRecordIter: 用于图片文件</p></li>
+</ul>
+
+<p>节省数据处理时间，如shuffle和定义batch_size等操作。</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-7" style="background:;">
+  <hgroup>
+    <h2>NDArrayIter</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">train_data = {&#39;data&#39;: np.array(), &#39;label&#39;: np.array()}
+test_data = {&#39;data&#39;: np.array(), &#39;label&#39;: np.array()}
+
+train_iter = mx.io.NDArrayIter(train_data[&#39;data&#39;].reshape([17000, 1, 200, 200]),
+                               train_data[&#39;label&#39;], batch_size=50, shuffle = True)
+test_iter = mx.io.NDArrayIter(test_data[&#39;data&#39;].reshape([3000, 1, 200, 200]),
+                              test_data[&#39;label&#39;], batch_size=100, shuffle = True)
+</code></pre>
+
+<h2></h2>
+
+<h2>ImageRecordIter</h2>
+
+<p><code>im2rec</code> 工具，将图片和标签打包成单文件，节省磁盘空间并有利于数据读取。</p>
+
+<pre><code class="r">img_lst_path = &#39;/User/yaleI/alphawolf_data/img/img.rec&#39;
+dataiter = mx.io.ImageRecordIter(path_imgrec=img_lst_path,
+                                 batch_size=128,
+                                 preprocess_threads=4, 
+                                 data_shape=(3, 250, 370), # 切割图片
+                                 shuffle=True,             # 随机打散
+                                 rand_crop=True,           # 随机切割部分像素
+                                 rand_mirror=True,         # 随机翻转
+                                 mean_img=&quot;data/cifar/cifar10_mean.bin&quot;,
+                                 )
+</code></pre>
+
+<p>可根据基础类<code>io.DataIter</code>自定义IO类。</p>
 
   </article>
   <!-- Presenter Notes -->
@@ -87,6 +177,19 @@
   </hgroup>
   <article data-timings="">
     
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-9" style="background:;">
+  <hgroup>
+    <h2>README MORE</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><a href="http://www.zhihu.com/question/36086842">mxnet VS caffe</a></li>
+</ul>
+
   </article>
   <!-- Presenter Notes -->
 </slide>
@@ -115,8 +218,38 @@
     </li>
     <li>
       <a href="#" target="_self" rel='tooltip' 
-        data-slide=4 title='Slide 2'>
+        data-slide=4 title='MXNet系统组成'>
          4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='mxnet.NDArray'>
+         5
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=6 title='mxnet.io'>
+         6
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=7 title='NDArrayIter'>
+         7
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=8 title='Slide 2'>
+         8
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=9 title='README MORE'>
+         9
       </a>
     </li>
   </ul>
