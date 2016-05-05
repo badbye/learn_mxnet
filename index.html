@@ -89,14 +89,9 @@
     <ul>
 <li><p>数据结构: <code>mxnet.NDArray</code></p></li>
 <li><p>网络定义: <code>mxnet.symbol</code> <strong>核心接口</strong></p></li>
-<li><p>优化器: <code>mxnet.optimize</code></p></li>
 <li><p>数据传输: <code>mxnet.io</code></p></li>
-<li><p>其他:</p>
-
-<ul>
-<li>模型接口: 模型的载入，存贮以及fine-tune等</li>
-<li>kvstore: 设备间的数据交互</li>
-</ul></li>
+<li><p>优化器: <code>mxnet.optimize</code></p></li>
+<li><p>模型接口: 模型的载入，存贮以及fine-tune等</p></li>
 </ul>
 
   </article>
@@ -108,7 +103,17 @@
     <h2>mxnet.NDArray</h2>
   </hgroup>
   <article data-timings="">
-    <p>MXNet的基础数据结构，类似于numpy的array结构。<strong>支持CPU和GPU</strong>，并有<strong>自动求导</strong>的功能。</p>
+    <p>MXNet的基础数据结构，类似于numpy的array结构。<strong>存贮和计算均支持CPU和GPU的切换</strong>，并且有<strong>惰性求值</strong>的功能。</p>
+
+<pre><code class="r">import mxnet as mx
+a = mx.nd.ones((20000, 30000), mx.gpu()) # 存贮在GPU上
+b = mx.nd.ones((30000, 20000), mx.gpu())
+d = mx.nd.dot(a, b) 
+# 至此a,b,d都只是符号链接，并没真正赋值
+d.asnumpy() # run
+</code></pre>
+
+<p>其他常用诸多操作于都跟numpy类似，学习成本较低。</p>
 
   </article>
   <!-- Presenter Notes -->
@@ -116,15 +121,80 @@
 
 <slide class="" id="slide-6" style="background:;">
   <hgroup>
+    <h2>mxnet.symbol</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>系统的核心接口，用于定义神经网络的结构，语法简单，<strong>自动检测数据纬度</strong>。</p>
+
+<p><img src='pic/mlp.jpg' height=400/></p>
+
+<p><a href="https://github.com/dmlc/mxnet/tree/master/example/image-classification">图像识别的常用CNN网络，AlexNet, GoogleNet, VGG,Inception等均有实现</a>。</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-7" style="background:;">
+  <hgroup>
+    <h2>纬度推断</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="python">data = mx.symbol.Variable(&#39;data&#39;)
+fc1  = mx.symbol.FullyConnected(data = data, name=&#39;fc1&#39;, num_hidden=128)
+act1 = mx.symbol.Activation(data = fc1, name=&#39;relu1&#39;, act_type=&quot;relu&quot;)
+fc2  = mx.symbol.FullyConnected(data = act1, name = &#39;fc2&#39;, num_hidden = 64)
+mlp  = mx.symbol.SoftmaxOutput(data = fc2, name = &#39;softmax&#39;)
+</code></pre>
+
+<pre><code class="python">arg_shape, out_shape, aux_shape = mlp.infer_shape(data=(100, 100))
+
+&gt;&gt;&gt; dict(zip(mlp.list_arguments(), arg_shape)) # 每层参数纬度
+{&#39;data&#39;: (100L, 100L), 
+ &#39;fc1_weight&#39;: (128L, 100L), &#39;fc1_bias&#39;: (128L,)
+ &#39;fc2_weight&#39;: (64L, 128L), &#39;fc2_bias&#39;: (64L,), 
+ &#39;softmax_label&#39;: (100L,),}
+&gt;&gt;&gt; out_shape # 输出结果纬度
+[(100L, 64L)]
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-8" style="background:;">
+  <hgroup>
+    <h2>用于文本分类的卷积网络</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><a href="http://arxiv.org/pdf/1408.5882v2.pdf">Convolutional Neural Networks for Sentence Classification</a>
+<img src='pic/text_cnn.png' height=400></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-9" style="background:;">
+  <hgroup>
+    <h2>用于文本分类的卷积网络</h2>
+  </hgroup>
+  <article data-timings="">
+    <h2>TOADD</h2>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-10" style="background:;">
+  <hgroup>
     <h2>mxnet.io</h2>
   </hgroup>
   <article data-timings="">
     <p>常用IO接口:</p>
 
 <ul>
-<li><p>NDArrayIter: 用于常规的array数据</p></li>
-<li><p>CSVIter: 用于csv文件</p></li>
-<li><p>ImageRecordIter: 用于图片文件</p></li>
+<li><p><code>NDArrayIter</code>: 用于常规的array数据</p></li>
+<li><p><code>CSVIter</code>: 用于csv文件</p></li>
+<li><p><code>ImageRecordIter</code>: 用于图片文件</p></li>
 </ul>
 
 <p>节省数据处理时间，如shuffle和定义batch_size等操作。</p>
@@ -133,7 +203,7 @@
   <!-- Presenter Notes -->
 </slide>
 
-<slide class="" id="slide-7" style="background:;">
+<slide class="" id="slide-11" style="background:;">
   <hgroup>
     <h2>NDArrayIter</h2>
   </hgroup>
@@ -147,11 +217,19 @@ test_iter = mx.io.NDArrayIter(test_data[&#39;data&#39;].reshape([3000, 1, 200, 2
                               test_data[&#39;label&#39;], batch_size=100, shuffle = True)
 </code></pre>
 
-<h2></h2>
+  </article>
+  <!-- Presenter Notes -->
+</slide>
 
-<h2>ImageRecordIter</h2>
+<slide class="" id="slide-12" style="background:;">
+  <hgroup>
+    <h2>ImageRecordIter</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><code>im2rec</code> 工具，将图片和标签打包成单文件，节省磁盘空间并有利于数据读取。</p>
 
-<p><code>im2rec</code> 工具，将图片和标签打包成单文件，节省磁盘空间并有利于数据读取。</p>
+<pre><code class="sh">./im2rec image.lst image_dir image.bin resize=256 # image.lst 图片文件列表
+</code></pre>
 
 <pre><code class="r">img_lst_path = &#39;/User/yaleI/alphawolf_data/img/img.rec&#39;
 dataiter = mx.io.ImageRecordIter(path_imgrec=img_lst_path,
@@ -171,9 +249,9 @@ dataiter = mx.io.ImageRecordIter(path_imgrec=img_lst_path,
   <!-- Presenter Notes -->
 </slide>
 
-<slide class="class" id="id" style="background:;">
+<slide class="" id="slide-13" style="background:;">
   <hgroup>
-    <h2>Slide 2</h2>
+    <h2>mxnet.optimizer</h2>
   </hgroup>
   <article data-timings="">
     
@@ -181,13 +259,95 @@ dataiter = mx.io.ImageRecordIter(path_imgrec=img_lst_path,
   <!-- Presenter Notes -->
 </slide>
 
-<slide class="" id="slide-9" style="background:;">
+<slide class="" id="slide-14" style="background:;">
+  <hgroup>
+    <h2>mxnet.model</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>网络结构和数据准备好后，开始训练</p>
+
+<pre><code class="python">model = mx.model.FeedForward.create(
+     symbol = mlp,
+     num_epoch=num_epoch,
+     learning_rate=0.01)
+model.fit()
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-15" style="background:;">
+  <hgroup>
+    <h2>mxnet.model</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="python">prefix = &#39;mymodel&#39;
+iteration = 100
+# 保存*.parameter(参数值) 和＊json(网络图) 两个文件
+model.save(prefix, iteration) 
+
+# 加载已有模型
+model_loaded = mx.model.FeedForward.load(prefix, iteration)
+
+# fine-tune
+model_loaded.fit(***) 
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-16" style="background:;">
+  <hgroup>
+    <h2>案例分享</h2>
+  </hgroup>
+  <article data-timings="">
+    
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-17" style="background:;">
+  <hgroup>
+    <h2>More Resource</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><p><a href="https://github.com/dmlc/mxnet-model-gallery/blob/master/imagenet-1k-inception-bn.md">Inception-BN Network on ILSVRC2012 </a></p></li>
+<li><p><a href="https://github.com/dmlc/mxnet-model-gallery/blob/master/imagenet-1k-inception-v3.md">Inception-V3 Network on ILSVRC2012</a></p></li>
+<li><p><a href="https://github.com/dmlc/mxnet-model-gallery/tree/master/imagenet-21k-inception">Inception-BN Network on Full ImageNet Network</a></p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-18" style="background:;">
+  <hgroup>
+    <h2>Yelp Classification</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><a href="https://www.kaggle.com/c/yelp-restaurant-photo-classification">Yelp Restaurant Photo Classification
+</a></p>
+
+<ul>
+<li><p><a href="http://blog.kaggle.com/2016/04/28/yelp-restaurant-photo-classification-winners-interview-1st-place-dmitrii-tsybulevskii/">No.1 Solution</a>: 使用了三个Pre-trained Model生成组合feature，再用多种分类模型组合投票</p></li>
+<li><p><a href="https://github.com/bzshang/yelp-photo-classification">No.4 Solution</a>: 在Inception-V3 Network基础上进行Fine-tune，然后使用SVM，RF等模型组合做预测</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-19" style="background:;">
   <hgroup>
     <h2>README MORE</h2>
   </hgroup>
   <article data-timings="">
     <ul>
-<li><a href="http://www.zhihu.com/question/36086842">mxnet VS caffe</a></li>
+<li><p>[]</p></li>
+<li><p><a href="http://www.zhihu.com/question/36086842">mxnet VS caffe</a></p></li>
 </ul>
 
   </article>
@@ -230,26 +390,86 @@ dataiter = mx.io.ImageRecordIter(path_imgrec=img_lst_path,
     </li>
     <li>
       <a href="#" target="_self" rel='tooltip' 
-        data-slide=6 title='mxnet.io'>
+        data-slide=6 title='mxnet.symbol'>
          6
       </a>
     </li>
     <li>
       <a href="#" target="_self" rel='tooltip' 
-        data-slide=7 title='NDArrayIter'>
+        data-slide=7 title='纬度推断'>
          7
       </a>
     </li>
     <li>
       <a href="#" target="_self" rel='tooltip' 
-        data-slide=8 title='Slide 2'>
+        data-slide=8 title='用于文本分类的卷积网络'>
          8
       </a>
     </li>
     <li>
       <a href="#" target="_self" rel='tooltip' 
-        data-slide=9 title='README MORE'>
+        data-slide=9 title='用于文本分类的卷积网络'>
          9
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=10 title='mxnet.io'>
+         10
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=11 title='NDArrayIter'>
+         11
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=12 title='ImageRecordIter'>
+         12
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=13 title='mxnet.optimizer'>
+         13
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=14 title='mxnet.model'>
+         14
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=15 title='mxnet.model'>
+         15
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=16 title='案例分享'>
+         16
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=17 title='More Resource'>
+         17
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=18 title='Yelp Classification'>
+         18
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=19 title='README MORE'>
+         19
       </a>
     </li>
   </ul>
